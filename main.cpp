@@ -2,6 +2,7 @@
 #include "svg.h"
 
 #include <cmath>
+#include <fstream>
 
 using namespace std::literals;
 using namespace svg;
@@ -10,7 +11,7 @@ using namespace svg;
 Пример использования библиотеки. Он будет компилироваться и работать, когда вы реализуете
 все классы библиотеки.
 */
-/*
+
 namespace {
 
 Polyline CreateStar(Point center, double outer_rad, double inner_rad, int num_rays) {
@@ -29,6 +30,10 @@ Polyline CreateStar(Point center, double outer_rad, double inner_rad, int num_ra
 
 // Выводит приветствие, круг и звезду
 void DrawPicture() {
+    std::ofstream out("draw.svg");
+    if(!out) {
+        return;
+    }
     Document doc;
     doc.Add(Circle().SetCenter({20, 20}).SetRadius(10));
     doc.Add(Text()
@@ -39,29 +44,22 @@ void DrawPicture() {
                 .SetFontWeight("bold"s)
                 .SetData("Hello C++"s));
     doc.Add(CreateStar({20, 50}, 10, 5, 5));
-    doc.Render(std::cout);
+    doc.Render(out);
 }
 
 }  // namespace
-*/
+
 
 int main() {
-    /*
-       Это пример для иллюстрации работы класса Circle, данного в заготовке решения.
-       После того как вы реализуете реализуете класс Document, аналогичного результата
-       можно будет достичь так:
-
-       Document doc;
-       doc.Add(Circle().SetCenter({20, 20}).SetRadius(10));
-       doc.Render(std::cout);
-    */
-    std::cout << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
-    std::cout << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
-
-    Circle c;
-    c.SetCenter({20, 20}).SetRadius(10);
-    RenderContext ctx(std::cout, 2, 2);
-    c.Render(ctx);
-
-    std::cout << "</svg>"sv;
+    DrawPicture();
+    // Document doc;
+    // doc.Add(Circle().SetCenter({20, 20}).SetRadius(10));
+    // doc.Add(Text().SetFontSize(12).SetFontFamily("Verdana").SetFontWeight("bold").SetPosition({100, 100}).SetData("sndfj"));
+    // doc.Add(Polyline().AddPoint({100, 100}).AddPoint({200, 200}).AddPoint({300, 300}));
+    // std::ofstream out("output.svg");
+    // if(!out) {
+    //     std::cerr << "error";
+    //     return 1;
+    // }
+    // doc.Render(out);
 }

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <vector>
 #include <string>
 
 namespace svg {
@@ -22,25 +23,13 @@ struct Point {
  * Хранит ссылку на поток вывода, текущее значение и шаг отступа при выводе элемента
  */
 struct RenderContext {
-    RenderContext(std::ostream& out)
-        : out(out) {
-    }
+    RenderContext(std::ostream& out);
 
-    RenderContext(std::ostream& out, int indent_step, int indent = 0)
-        : out(out)
-        , indent_step(indent_step)
-        , indent(indent) {
-    }
+    RenderContext(std::ostream& out, int indent_step, int indent = 0);
 
-    RenderContext Indented() const {
-        return {out, indent_step, indent + indent_step};
-    }
+    RenderContext Indented() const;
 
-    void RenderIndent() const {
-        for (int i = 0; i < indent; ++i) {
-            out.put(' ');
-        }
-    }
+    void RenderIndent() const;
 
     std::ostream& out;
     int indent_step = 0;
@@ -82,30 +71,30 @@ private:
  * Класс Polyline моделирует элемент <polyline> для отображения ломаных линий
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/polyline
  */
-class Polyline {
+class Polyline final : public Object {
 public:
     // Добавляет очередную вершину к ломаной линии
     Polyline& AddPoint(Point point);
+private:
+    void RenderObject(const RenderContext& context) const override;
 
-    /*
-     * Прочие методы и данные, необходимые для реализации элемента <polyline>
-     */
+    std::vector<Point> points_;
 };
 
 /*
  * Класс Text моделирует элемент <text> для отображения текста
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/text
  */
-class Text {
+class Text final : public Object {
 public:
     // Задаёт координаты опорной точки (атрибуты x и y)
-    Text& SetPosition(Point pos);
+    Text& SetPosition(Point position);
 
     // Задаёт смещение относительно опорной точки (атрибуты dx, dy)
     Text& SetOffset(Point offset);
 
     // Задаёт размеры шрифта (атрибут font-size)
-    Text& SetFontSize(uint32_t size);
+    Text& SetFontSize(uint32_t font_size);
 
     // Задаёт название шрифта (атрибут font-family)
     Text& SetFontFamily(std::string font_family);
@@ -116,8 +105,19 @@ public:
     // Задаёт текстовое содержимое объекта (отображается внутри тега text)
     Text& SetData(std::string data);
 
-    // Прочие данные и методы, необходимые для реализации элемента <text>
+private:
+    void RenderObject(const RenderContext& context) const override;
+
+    Point position_;
+    Point offset_;
+    uint32_t font_size_ = 1;
+    std::string font_family_;
+    std::string font_weight_;
+    std::string data_;
 };
+
+template <typename T>
+concept Obj = std::is_base_of_v<Object, std::remove_reference_t<T>>;
 
 class Document {
 public:
@@ -127,15 +127,18 @@ public:
      Document doc;
      doc.Add(Circle().SetCenter({20, 30}).SetRadius(15));
     */
-    // void Add(???);
+    template <Obj T>
+    void Add(T&& obj) {
+        objects_uptrs_.push_back(std::make_unique<std::decay_t<T>>(std::forward<T>(obj)));
+    }
 
     // Добавляет в svg-документ объект-наследник svg::Object
     void AddPtr(std::unique_ptr<Object>&& obj);
 
     // Выводит в ostream svg-представление документа
     void Render(std::ostream& out) const;
-
-    // Прочие методы и данные, необходимые для реализации класса Document
+private:
+    std::vector<std::unique_ptr<Object>> objects_uptrs_;
 };
 
 }  // namespace svg
