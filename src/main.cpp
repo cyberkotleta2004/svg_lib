@@ -19,6 +19,8 @@ public:
 
     void Draw(svg::ObjectContainer& container) const override {
         svg::Polyline polyline;
+        polyline.SetFillColor("red");
+        polyline.SetStrokeColor("black");
         for (int i = 0; i <= num_rays_; ++i) {
             double angle = 2 * M_PI * (i % num_rays_) / num_rays_;
             polyline.AddPoint({center_.x + outer_radius_ * sin(angle), center_.y - outer_radius_ * cos(angle)});
@@ -47,13 +49,19 @@ public:
     void Draw(svg::ObjectContainer& container) const override {
         container.Add(svg::Circle()
             .SetCenter({head_center_.x, head_center_.y + head_radius_ * 5})
-            .SetRadius(head_radius_ * 2.0));  
+            .SetRadius(head_radius_ * 2.0)
+            .SetFillColor("rgb(240,240,240)")
+            .SetStrokeColor("black"));  
         container.Add(svg::Circle()
             .SetCenter({head_center_.x, head_center_.y + head_radius_ * 2})
-            .SetRadius(head_radius_ * 1.5));
+            .SetRadius(head_radius_ * 1.5)
+            .SetFillColor("rgb(240,240,240)")
+            .SetStrokeColor("black"));  
         container.Add(svg::Circle()
             .SetCenter(head_center_)
-            .SetRadius(head_radius_));
+            .SetRadius(head_radius_)
+            .SetFillColor("rgb(240,240,240)")
+            .SetStrokeColor("black"));  
     }
 
 private:
@@ -97,19 +105,28 @@ int main() {
     using namespace std;
 
     vector<unique_ptr<svg::Drawable>> picture;
-
     picture.emplace_back(make_unique<Triangle>(Point{100, 20}, Point{120, 50}, Point{80, 40}));
-    // 5-лучевая звезда с центром {50, 20}, длиной лучей 10 и внутренним радиусом 4
     picture.emplace_back(make_unique<Star>(Point{50.0, 20.0}, 10.0, 4.0, 5));
-    // Снеговик с "головой" радиусом 10, имеющей центр в точке {30, 20}
     picture.emplace_back(make_unique<Snowman>(Point{30, 20}, 10.0));
 
     svg::Document doc;
-    // Так как документ реализует интерфейс ObjectContainer,
-    // его можно передать в DrawPicture в качестве цели для рисования
     DrawPicture(picture, doc);
 
-    // Выводим полученный документ в stdout
+    const Text base_text =  //
+        Text()
+            .SetFontFamily("Verdana"s)
+            .SetFontSize(12)
+            .SetPosition({10, 100})
+            .SetData("Happy New Year!"s);
+    doc.Add(Text{base_text}
+                .SetStrokeColor("yellow"s)
+                .SetFillColor("yellow"s)
+                .SetStrokeLineJoin(StrokeLineJoin::ROUND)
+                .SetStrokeLineCap(StrokeLineCap::ROUND)
+                .SetStrokeWidth(3));
+    doc.Add(Text{base_text}.SetFillColor("red"s));
+
     std::ofstream out("file.svg");
+
     doc.Render(out);
 }

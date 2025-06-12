@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -7,6 +8,27 @@
 #include <string>
 
 namespace svg {
+
+using Color = std::string;
+
+inline const Color NoneColor{"none"};
+
+enum class StrokeLineCap {
+    BUTT,
+    ROUND,
+    SQUARE,
+};
+
+enum class StrokeLineJoin {
+    ARCS,
+    BEVEL,
+    MITER,
+    MITER_CLIP,
+    ROUND,
+};
+
+std::ostream& operator<<(std::ostream& out, StrokeLineCap stroke_linecap);
+std::ostream& operator<<(std::ostream& out, StrokeLineJoin stroke_linejoin);
 
 struct Point {
     Point() = default;
@@ -51,11 +73,76 @@ private:
     virtual void RenderObject(const RenderContext& context) const = 0;
 };
 
+template <typename Owner>
+class PathProps {
+public:
+    Owner& SetFillColor(Color fill_color) {
+        fill_color_ = std::move(fill_color);
+        return AsOwner();
+    }
+
+    Owner& SetStrokeColor(Color stroke_color) {
+        stroke_color_ = std::move(stroke_color);
+        return AsOwner();
+    }
+
+    Owner& SetStrokeWidth(double stroke_width) {
+        stroke_width_ = stroke_width;
+        return AsOwner();
+    }
+
+    Owner& SetStrokeLineCap(StrokeLineCap stroke_linecap) {
+        stroke_linecap_ = stroke_linecap;
+        return AsOwner();
+    }
+
+    Owner& SetStrokeLineJoin(StrokeLineJoin stroke_linejoin) {
+        stroke_linejoin_ = stroke_linejoin;
+        return AsOwner();
+    }
+
+protected:
+    ~PathProps() = default;
+
+    void RenderAttrs(std::ostream& out) const {
+        if(fill_color_) {
+            out << " fill=\"" << *fill_color_ << "\"";
+        }
+
+        if(stroke_color_) {
+            out << " stroke=\"" << *stroke_color_ << "\"";
+        }
+
+        if(stroke_width_) {
+            out << " stroke-width=\"" << *stroke_width_ << "\"";
+        }
+
+        if(stroke_linecap_) {
+            out << " stroke-linecap=\"" << *stroke_linecap_ << "\"";
+        }
+
+        if(stroke_linejoin_) {
+            out << " stroke-linejoin=\"" << *stroke_linejoin_ << "\"";
+        }
+    }
+
+private:
+    Owner& AsOwner() {
+        return static_cast<Owner&>(*this);
+    }
+
+    std::optional<Color> fill_color_;
+    std::optional<Color> stroke_color_;
+    std::optional<double> stroke_width_;
+    std::optional<StrokeLineCap> stroke_linecap_;
+    std::optional<StrokeLineJoin> stroke_linejoin_;
+};
+
 /*
  * Класс Circle моделирует элемент <circle> для отображения круга
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/circle
  */
-class Circle final : public Object {
+class Circle final : public Object, public PathProps<Circle> {
 public:
     Circle& SetCenter(Point center);
     Circle& SetRadius(double radius);
@@ -71,7 +158,7 @@ private:
  * Класс Polyline моделирует элемент <polyline> для отображения ломаных линий
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/polyline
  */
-class Polyline final : public Object {
+class Polyline final : public Object, public PathProps<Polyline> {
 public:
     // Добавляет очередную вершину к ломаной линии
     Polyline& AddPoint(Point point);
@@ -85,7 +172,7 @@ private:
  * Класс Text моделирует элемент <text> для отображения текста
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/text
  */
-class Text final : public Object {
+class Text final : public Object, public PathProps<Text> {
 public:
     // Задаёт координаты опорной точки (атрибуты x и y)
     Text& SetPosition(Point position);
@@ -111,9 +198,9 @@ private:
     Point position_;
     Point offset_;
     uint32_t font_size_ = 1;
-    std::string font_family_;
-    std::string font_weight_;
-    std::string data_;
+    std::optional<std::string> font_family_;
+    std::optional<std::string> font_weight_;
+    std::optional<std::string> data_;
 };
 
 template <typename T>

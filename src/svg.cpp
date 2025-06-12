@@ -35,6 +35,46 @@ void Object::Render(const RenderContext& context) const {
 
     context.out << std::endl;
 }
+// --------- PathProps -----------------
+
+std::ostream& operator<<(std::ostream& out, StrokeLineCap stroke_linecap) {
+    switch(stroke_linecap) {
+    case(StrokeLineCap::BUTT):
+        out << "butt";
+        break;
+    case(StrokeLineCap::ROUND):
+        out << "round";
+        break;
+    case(StrokeLineCap::SQUARE):
+        out << "square";
+        break;
+    }
+    
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, StrokeLineJoin stroke_linejoin) {
+    switch(stroke_linejoin) {
+    case(StrokeLineJoin::ARCS):
+        out << "arcs";
+        break;
+    case(StrokeLineJoin::BEVEL):
+        out << "bevel";
+        break;
+    case(StrokeLineJoin::MITER):
+        out << "miter";
+        break;
+    case(StrokeLineJoin::MITER_CLIP):
+        out << "miter-clip";
+        break;
+    case(StrokeLineJoin::ROUND):
+        out << "round";
+        break;
+    }
+    
+    return out;
+}
+
 
 // ---------- Circle ------------------
 
@@ -52,6 +92,7 @@ void Circle::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
     out << "<circle cx=\"" << center_.x << "\" cy=\"" << center_.y << "\" ";
     out << "r=\"" << radius_ << "\" ";
+    RenderAttrs(out);
     out << "/>";
 }
 
@@ -70,7 +111,9 @@ void Polyline::RenderObject(const RenderContext& context) const {
         out << point.x << "," << point.y << " ";
     }
 
-    out << "\"" << "/>";
+    out << "\"";
+    RenderAttrs(out);
+    out << "/>";
 }
 
 // ----------- Text ------------------
@@ -119,26 +162,29 @@ void Text::RenderObject(const RenderContext& context) const {
         out << " dy=\"" << offset_.y << "\"";
         out << " font-size=\"" << font_size_ << "\"";
     
-        if(!font_family_.empty()) {
-            out << " font-family=\"" << font_family_ << "\"";
+        if(font_family_) {
+            out << " font-family=\"" << *font_family_ << "\"";
         }
     
-        if(!font_weight_.empty()) {
-            out << " font-weight=\"" << font_weight_ << "\"";
+        if(font_weight_) {
+            out << " font-weight=\"" << *font_weight_ << "\"";
         }
+        RenderAttrs(out);
     }
 
     out << ">";
     //render text
-    {
-        for(char ch : data_) {
-            switch(ch) {
-            case '"': out << "&quot;"; break;
-            case '<': out << "&lt;"; break;
-            case '>': out << "&gt;"; break;
-            case '\'': out << "&apos;"; break;
-            case '&': out << "&amp;"; break;
-            default: out << ch;
+    {   
+        if(data_) {
+            for(char ch : *data_) {
+                switch(ch) {
+                case '"': out << "&quot;"; break;
+                case '<': out << "&lt;"; break;
+                case '>': out << "&gt;"; break;
+                case '\'': out << "&apos;"; break;
+                case '&': out << "&amp;"; break;
+                default: out << ch;
+                }
             }
         }
     }
