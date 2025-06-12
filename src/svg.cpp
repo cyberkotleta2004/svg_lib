@@ -1,4 +1,4 @@
-#include "svg.h"
+#include "svg.hpp"
 
 namespace svg {
 

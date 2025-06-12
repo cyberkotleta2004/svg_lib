@@ -119,25 +119,33 @@ private:
 template <typename T>
 concept Obj = std::is_base_of_v<Object, std::remove_reference_t<T>>;
 
-class Document {
+class ObjectContainer {
 public:
-    /*
-     Метод Add добавляет в svg-документ любой объект-наследник svg::Object.
-     Пример использования:
-     Document doc;
-     doc.Add(Circle().SetCenter({20, 30}).SetRadius(15));
-    */
     template <Obj T>
     void Add(T&& obj) {
-        objects_uptrs_.push_back(std::make_unique<std::decay_t<T>>(std::forward<T>(obj)));
+        AddPtr(std::make_unique<std::decay_t<T>>(std::forward<T>(obj)));
     }
+protected:
+    ~ObjectContainer() = default;
+private:
+    virtual void AddPtr(std::unique_ptr<Object>&& obj) = 0;
+};
 
-    // Добавляет в svg-документ объект-наследник svg::Object
-    void AddPtr(std::unique_ptr<Object>&& obj);
+class Drawable {
+public:
+    virtual void Draw(ObjectContainer& container) const = 0;
+    virtual ~Drawable() = default;
+};
 
+class Document : public ObjectContainer {
+public:
     // Выводит в ostream svg-представление документа
     void Render(std::ostream& out) const;
+
 private:
+    // Добавляет в svg-документ объект-наследник svg::Object
+    void AddPtr(std::unique_ptr<Object>&& obj) override;
+
     std::vector<std::unique_ptr<Object>> objects_uptrs_;
 };
 
