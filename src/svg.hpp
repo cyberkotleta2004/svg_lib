@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <variant>
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -9,9 +10,20 @@
 
 namespace svg {
 
-using Color = std::string;
+struct Rgb {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+};
 
-inline const Color NoneColor{"none"};
+struct Rgba {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+    double opacity;
+};
+
+using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
 
 enum class StrokeLineCap {
     BUTT,
@@ -73,6 +85,16 @@ private:
     virtual void RenderObject(const RenderContext& context) const = 0;
 };
 
+struct ColorVisitor {
+    std::string property_name;
+    std::ostream& out;
+
+    void operator()(std::monostate) const;
+    void operator()(const std::string& str) const;
+    void operator()(const Rgb& rgb) const;
+    void operator()(const Rgba& rgba) const;
+};
+
 template <typename Owner>
 class PathProps {
 public:
@@ -105,13 +127,8 @@ protected:
     ~PathProps() = default;
 
     void RenderAttrs(std::ostream& out) const {
-        if(fill_color_) {
-            out << " fill=\"" << *fill_color_ << "\"";
-        }
-
-        if(stroke_color_) {
-            out << " stroke=\"" << *stroke_color_ << "\"";
-        }
+        std::visit(ColorVisitor{"fill", out}, fill_color_);
+        std::visit(ColorVisitor{"stroke", out}, stroke_color_);
 
         if(stroke_width_) {
             out << " stroke-width=\"" << *stroke_width_ << "\"";
@@ -131,8 +148,8 @@ private:
         return static_cast<Owner&>(*this);
     }
 
-    std::optional<Color> fill_color_;
-    std::optional<Color> stroke_color_;
+    Color fill_color_;
+    Color stroke_color_;
     std::optional<double> stroke_width_;
     std::optional<StrokeLineCap> stroke_linecap_;
     std::optional<StrokeLineJoin> stroke_linejoin_;

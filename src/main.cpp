@@ -78,7 +78,7 @@ public:
     }
 
     void Draw(svg::ObjectContainer& container) const override {
-        container.Add(svg::Polyline().AddPoint(p1_).AddPoint(p2_).AddPoint(p3_).AddPoint(p1_));
+        container.Add(svg::Polyline().AddPoint(p1_).AddPoint(p2_).AddPoint(p3_).AddPoint(p1_).SetFillColor(svg::Rgb{12, 42, 122}));
     }
 private:
     svg::Point p1_, p2_, p3_;

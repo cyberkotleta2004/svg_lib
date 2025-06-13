@@ -35,6 +35,34 @@ void Object::Render(const RenderContext& context) const {
 
     context.out << std::endl;
 }
+
+// ------- Color Visitor ---------------
+
+void ColorVisitor::operator()(std::monostate) const {
+    out << " " << property_name << "=\"none\"";
+}
+
+void ColorVisitor::operator()(const std::string& str) const {
+    out << " " << property_name << "=\"" << str << "\"";
+}
+
+void ColorVisitor::operator()(const Rgb& rgb) const {
+    out << " " << property_name
+        << "=\"rgb(" 
+        << static_cast<int>(rgb.red) << ","
+        << static_cast<int>(rgb.green) << ","
+        << static_cast<int>(rgb.blue) << ")\"";
+}
+
+void ColorVisitor::operator()(const Rgba& rgba) const {
+    out << " " << property_name
+        <<"=\"rgba(" 
+        << static_cast<int>(rgba.red) << ","
+        << static_cast<int>(rgba.green) << ","
+        << static_cast<int>(rgba.blue) << ","
+        << rgba.opacity << ")\"";
+}
+
 // --------- PathProps -----------------
 
 std::ostream& operator<<(std::ostream& out, StrokeLineCap stroke_linecap) {
